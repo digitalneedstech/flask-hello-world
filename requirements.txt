@@ -1,2 +1,4 @@
-Flask
-Gunicorn
+fastapi
+uvicorn
+boto3
+python-multipart
