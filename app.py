@@ -3,7 +3,9 @@ import requests
 
 app = Flask(__name__)
 
-
+@app.route('/')
+def hello_world():
+    return 'Hello, World!'
 @app.route('/home', methods=["GET"])
 def hello_world():
     if request.method == "GET":
