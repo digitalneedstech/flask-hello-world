@@ -4,7 +4,7 @@ on:
   pull_request:
     branches:
       - master
-
+  
 jobs:
   sample:
     runs-on: ubuntu-latest
@@ -33,3 +33,16 @@ jobs:
         env:
           DIFF: ${{ steps.git-diff-action.outputs.raw-diff-path }}
         run: cat $DIFF
+      - name: Deploy Stage
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: 'http://localhost:8000/checks'
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+          data: '{"line": "import boto3"}'  
+      - name: Show Response
+        run: |
+          echo ${{ steps.myRequest.outputs.response }}
+          echo ${{ steps.myRequest.outputs.headers }}
+          echo ${{ steps.myRequest.outputs.status }}
+          echo ${{ fromJson(steps.myRequest.outputs.response).field_you_want_to_access }}
