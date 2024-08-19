@@ -3,7 +3,7 @@ import requests
 
 app = Flask(__name__)
 
-@app.route('/')
+@app.route('/test')
 def hello_world():
     return 'Hello, World!'
 @app.route('/home', methods=["GET"])
