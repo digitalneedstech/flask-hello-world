@@ -7,7 +7,7 @@ app = Flask(__name__)
 def hello_world():
     return 'Hello, World!'
 @app.route('/home', methods=["GET"])
-def hello_world():
+def get_hello_world():
     if request.method == "GET":
         print(request.args)
         requestToken = request.args.get("requestToken")
