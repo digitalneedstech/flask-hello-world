@@ -19,8 +19,8 @@ def get_hello_world():
         try:
             # Make a GET request to the API endpoint using requests.get()
             response = requests.post(url, headers=headers, json={
-                "api_key": "a254798bb6084fbf95cb1e5512c2781d",
-                "api_secret_key": "35919b6920f742b891c69b32e34545c4",
+                "api_key": "xxx",
+                "api_secret_key": "xxx",
                 "request_token": requestToken
             })
             # Check if the request was successful (status code 200)
