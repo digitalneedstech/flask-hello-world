@@ -1,12 +1,12 @@
+import os
+
 import requests
-from dotenv import dotenv_values
 from flask import Flask, request
 import os
 app = Flask(__name__)
-config = dotenv_values(".env")
-
-@app.route('/')
+@app.route('/',methods=["GET"])
 def hello_world():
+    print(os.getenv("API_KEY"))
     return 'Hello, World!'
 @app.route('/home', methods=["GET"])
 def get_hello_world():
