@@ -4,14 +4,12 @@ import requests
 from flask import Flask, request
 import os
 import yfinance as yf
-from environs import Env
 
 msft = yf.Ticker("MSFT")
 app = Flask(__name__)
 
 @app.route('/hello',methods=["GET"])
 def hello_world():
-    print(os.getenv("35919b6920f742b891c69b32e34545c4"))
     return 'Hello, World!'
 
 @app.route('/ticker',methods=["GET"])
@@ -28,16 +26,15 @@ def get_hello_world():
     if request.method == "GET":
         print(request.args)
         requestToken = request.args.get("requestToken")
-        secret=request.args.get("state")
         url = 'https://developer.paytmmoney.com/accounts/v2/gettoken'
         headers = {
             "Content-Type": "application/json"
         }
         try:
-            # Make a GET reqUpdatiuest to the API endpoint using requests.get()
+            # Make a GET request to the API endpoint using requests.get()
             response = requests.post(url, headers=headers, json={
-                "api_key": os.getenv(secret),
-                "api_secret_key": secret,
+                "api_key": os.getenv("API_KEY"),
+                "api_secret_key": os.getenv("API_SECRET"),
                 "request_token": requestToken
             })
             # Check if the request was successful (status code 200)

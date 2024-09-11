@@ -3,4 +3,3 @@ Gunicorn
 requests
 python-dotenv
 yfinance
-environs
