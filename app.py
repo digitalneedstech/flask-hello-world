@@ -1,7 +1,7 @@
 import requests
 from dotenv import dotenv_values
 from flask import Flask, request
-
+import os
 app = Flask(__name__)
 config = dotenv_values(".env")
 
@@ -20,8 +20,8 @@ def get_hello_world():
         try:
             # Make a GET request to the API endpoint using requests.get()
             response = requests.post(url, headers=headers, json={
-                "api_key": config["API_KEY"],
-                "api_secret_key": config["API_SECRET"],
+                "api_key": os.getenv("API_KEY"),
+                "api_secret_key": os.getenv("API_SECRET"),
                 "request_token": requestToken
             })
             # Check if the request was successful (status code 200)
