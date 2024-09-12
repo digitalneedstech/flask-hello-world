@@ -40,9 +40,12 @@ def get_hello_world():
             # Check if the request was successful (status code 200)
             if response.status_code == 200:
                 response_json = response.json()
+                print("token:"+requestToken)
+                print("response:"+response_json)
                 return {"token": requestToken, "response": response_json}
             else:
                 print(response.text)
+                return {"status":"failed"}
         except Exception:
             print("Exception encountered")
         finally:
@@ -50,7 +53,7 @@ def get_hello_world():
 
 @app.route('/funds', methods=["GET"])
 def get_funds_info():
-    token= request.headers.get("token") if request.headers.get("token") else token_received
+    token= request.headers.get("token")
     if request.method == "GET":
         url = 'https://developer.paytmmoney.com/accounts/v1/funds/summary?config=true'
         headers = {
@@ -62,10 +65,10 @@ def get_funds_info():
             # Check if the request was successful (status code 200)
             if response.status_code == 200:
                 response_json = response.json()
-                print(response_json)
+                print("yes")
                 return {"balance": response_json["data"]["funds_summary"]["trade_balance"]}
             else:
-                print(response.text)
+                print("no")
                 return {"balance":0.0}
         except Exception as e:
             print(e)
