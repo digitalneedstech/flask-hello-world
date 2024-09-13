@@ -41,7 +41,7 @@ def get_hello_world():
             if response.status_code == 200:
                 response_json = response.json()
                 print("token:"+requestToken)
-                print("response:"+response_json)
+                print(response_json)
                 return {"token": requestToken, "response": response_json}
             else:
                 print(response.text)
