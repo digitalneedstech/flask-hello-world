@@ -17,8 +17,8 @@ def get_ticker_price():
     stock=request.args.get("stock")
     print(stock)
     stock_data=yf.Ticker(stock)
-    print(stock_data.info)
-    return {"price":stock_data.info["open"]}
+    #print(stock_data.info)
+    return {"price":stock_data.info}
 
 
 @app.route('/home', methods=["GET"])
@@ -85,7 +85,7 @@ def place_order():
         quantity = request.get_json()['quantity']
         url = 'https://developer.paytmmoney.com/orders/v1/place/regular'
         headers = {
-            "x-jwt-token:": token,
+            "x-jwt-token": token,
             "Content-Type": "application/json"
         }
         try:
@@ -93,25 +93,28 @@ def place_order():
             funds_response=requests.get(os.getenv("API")+"/funds",headers={
                 "token":token
             })
+            print("funds ",funds_response.json())
             stock_price=requests.get(os.getenv("API")+"/ticker?stock="+stock_nse_id)
             if funds_response.status_code ==200 and stock_price.status_code==200:
-                if funds_response.json()["balance"] > stock_price.json()["price"]*quantity:
+                if funds_response.json()["balance"] > stock_price.json()["price"]["ask"]*quantity:
                     response = requests.post(url, headers=headers, json={
                         "txn_type": "B",
-                        "exchange": "BSE",
+                        "exchange": "NSE",
                         "segment": "E",
-                        "product": "I",
+                        "product": "C",
                         "security_id": stock_sec_id,
                         "quantity": quantity,
                         "validity": "DAY",
                         "order_type": "MKT",
-                        "price": 0,
+                        "price":0,
                         "source": "N",
                         "off_mkt_flag": "false"
                     })
+                    print("response", response.text)
                     # Check if the request was successful (status code 200)
                     if response.status_code == 200:
                         response_json = response.json()
+
                         if response_json["status"]=="success":
                             return {"status":"0"}
                         else:
@@ -125,11 +128,36 @@ def place_order():
                     return {"status":"2"}
             else:
                 return {"status": "1"}
-        except Exception:
-            print("Exception encountered")
+        except Exception as e:
+            print("Exception:", e )
             return {"status": "3"}
         finally:
             print("in finally block")
+
+@app.route('/book', methods=["GET"])
+def get_order_book():
+        if request.method == "GET":
+            order = request.args.get("order_no")
+            token = request.headers["token"]
+            url = 'https://developer.paytmmoney.com/orders/v1/trade-details?leg_no=1&segment=D&order_no='+order
+            headers = {
+                "Content-Type": "application/json",
+                "x-jwt-token":token
+            }
+            try:
+                # Make a GET request to the API endpoint using requests.get()
+                response = requests.get(url,headers=headers)
+                # Check if the request was successful (status code 200)
+                if response.status_code == 200:
+                    response_json = response.json()
+                    return {"response": response_json}
+                else:
+                    print(response.text)
+                    return {"status": "failed"}
+            except Exception:
+                print("Exception encountered")
+            finally:
+                print("in finally block")
 
 if __name__ == '__main__':
    app.run()
