@@ -1,9 +1,17 @@
 from http.client import responses
-
+import json
 import requests
-from flask import Flask, request
+from flask import Flask, request, json, Response, jsonify
 import os
 import yfinance as yf
+from sympy import timed, symbols
+from yahoofinance import HistoricalPrices
+from datetime import datetime,timedelta, date
+import pandas as pd
+
+from model.etf_model import ListOfETFModel
+from model.inital_data import InitialData
+from service.data_loader import load_initial_data
 
 msft = yf.Ticker("MSFT")
 app = Flask(__name__)
@@ -19,6 +27,17 @@ def get_ticker_price():
     stock_data=yf.Ticker(stock)
     #print(stock_data.info)
     return {"price":stock_data.info}
+
+
+@app.route('/historical',methods=["GET"])
+def get_historical_price():
+    stock=request.args.get("stock")
+    stock_data=yf.Ticker(stock)
+    #hist = msft.history(period="3mo")
+    #print("hist",hist)
+    historical_prices = HistoricalPrices(stock,
+                                         start_date=(datetime.today()-timedelta(days=60)).strftime('%Y-%m-%d'),end_date=datetime.today().strftime('%Y-%m-%d'))
+    return {"historical_data":historical_prices}
 
 
 @app.route('/home', methods=["GET"])
@@ -159,5 +178,107 @@ def get_order_book():
             finally:
                 print("in finally block")
 
+
+@app.before_request
+def before_first_request():
+    load_initial_data()
+    #pandas_df = pd.read_csv("etf_security_master.csv")
+    #symbols = pandas_df["symbol"].tolist()
+    #InitialData.symbols_with_prices=symbols
+@app.route('/ranks', methods=["GET"])
+def get_historical_prices():
+    list_etf_models=load_initial_data()
+    symbols = list_etf_models.etfs
+    symbols=list(filter(lambda symbol: "Nifty" in symbol.name, symbols))
+    #print("symbols", InitialData.symbols_with_prices)
+    symbol_pricing_map={}
+    stock = request.args.get("stock")
+    if stock:
+        get_stock_information = yf.Ticker(stock)
+        if "ask" in get_stock_information.info:
+            current_price = get_stock_information.info["ask"]
+        else:
+            current_price = get_stock_information.info["previousClose"]
+
+        if "fiftyDayAverage" in get_stock_information.info:
+            price_percentage = ((current_price - get_stock_information.info["fiftyDayAverage"]) * 100.0) / \
+                                              get_stock_information.info["fiftyDayAverage"]
+        else:
+            startDate = (datetime.today() - timedelta(days=60)).strftime('%Y-%m-%d')
+            endDate = datetime.today()
+            df = get_stock_information.history(start=startDate, end=endDate)
+            sixty_day_average_close = df["Close"].astype("int64").mean()
+            price_percentage = ((current_price - sixty_day_average_close) * 100.0) / sixty_day_average_close
+        print(price_percentage)
+        return {"price":price_percentage}
+    else:
+        for symbol in symbols:
+            symbol_name=symbol.symbol+".NS"
+            get_stock_information = yf.Ticker(symbol_name)
+            if "ask" in get_stock_information.info:
+                current_price=get_stock_information.info["ask"]
+            else:
+                current_price = get_stock_information.info["previousClose"]
+
+            if "fiftyDayAverage" in get_stock_information.info:
+                symbol.percentage=((current_price-get_stock_information.info["fiftyDayAverage"]) * 100.0) / get_stock_information.info["fiftyDayAverage"]
+                symbol_pricing_map[symbol_name]=((current_price-get_stock_information.info["fiftyDayAverage"]) * 100.0) / get_stock_information.info["fiftyDayAverage"]
+            '''
+            else:
+                startDate = (datetime.today() - timedelta(days=60)).strftime('%Y-%m-%d')
+                endDate = datetime.today()
+                df = get_stock_information.history(start=startDate, end=endDate)
+                sixty_day_average_close=df["Close"].astype("int64").mean()
+                symbol_pricing_map[symbol_name] = ((current_price - sixty_day_average_close) * 100.0) / sixty_day_average_close
+            '''
+        print(len(symbols))
+        symbols=list(filter(lambda symbol: symbol.percentage!=0.0, symbols))
+        print(len(symbols))
+        symbols.sort(key=lambda symbol:symbol.percentage)
+        '''
+        sorted_symbol_pricing_map={k: v for k, v in sorted(symbol_pricing_map.items(), key=lambda item: item[1])}
+        print("map", sorted_symbol_pricing_map)
+        list_final_symbols=sorted_symbol_pricing_map.keys()
+        print("sorted",sorted_symbol_pricing_map)
+        '''
+        return Response(
+        response=json.dumps({
+            "data": {
+                "data": [etf.to_dict() for etf in symbols]
+            }
+        }),
+        status=201,
+        mimetype="application/json"
+    )
+
+    '''
+    GetFacebookInformation = yf.Ticker("SMALLCAP.NS")
+
+    pd.set_option('display.max_rows', None)
+    startDate = (datetime.today()-timedelta(days=60)).strftime('%Y-%m-%d')
+    endDate = datetime.today()
+    df=GetFacebookInformation.history(start=startDate,end=endDate)
+    print("close",df["Close"].astype("int64").mean())
+
+    stock_data = yf.Ticker("SMALLCAP.NS")
+    print(stock_data.info["ask"])
+
+    per = ((stock_data.info["ask"]-df["Close"].astype("int64").mean()) * 100.0) / df["Close"].astype("int64").mean()
+    print("20DMA",per)
+    print("Daily", ((stock_data.info["ask"]-stock_data.info["fiftyDayAverage"]) * 100.0) / stock_data.info["fiftyDayAverage"])
+    print("max",df["Close"].max())
+    print("min", df["Close"].min())
+    '''
 if __name__ == '__main__':
+    app.run()
+    #get_historical_prices()
+    '''
    app.run()
+   n=0
+   while n==0:
+       print("hi")
+       stock_price=requests.get(os.getenv("API")+"/ticker?stock=NIFTYETF.NS")
+       print("stock",stock_price.json())
+    '''
+
+

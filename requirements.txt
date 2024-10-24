@@ -3,3 +3,5 @@ Gunicorn
 requests
 python-dotenv
 yfinance
+yahoofinance
+pandas
