@@ -5,3 +5,6 @@ python-dotenv
 yfinance
 yahoofinance
 pandas
+google-generativeai
+langchain-google-genai
+litellm
